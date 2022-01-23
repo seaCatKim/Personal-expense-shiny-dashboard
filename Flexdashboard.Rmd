@@ -49,8 +49,8 @@ fileInput("bank",
                      "text/comma-separated-values, text/plain",
                      ".csv"))
 
-fileInput("ing", 
-          "ING",
+fileInput("creditcard", 
+          "Credit Card",
           multiple = FALSE,
           accept = c("text/csv",
                      "text/comma-separated-values, text/plain",
@@ -184,7 +184,8 @@ materialSwitch("use_google_sheets", "Source from Googlesheets", status = "succes
 
 textInput("googlesheets_id_entry", 
           "Googlesheets ID", 
-          value = "1LJUpvwV5syRrsRXd8Go2qExvRrZgYQVXDPtDx3WWPU0") # UPDATE WITH UNIQUE ID from d/ ..... /edit in url
+          value = "1LJUpvwV5syRrsRXd8Go2qExvRrZgYQVXDPtDx3WWPU0") 
+# UPDATE WITH UNIQUE ID from d/ ..... /edit in url
 
 
 actionButton("retrieve_from_google_sheets", "Retrieve (from GS)", icon = icon("download", "fa"))
@@ -327,7 +328,7 @@ observeEvent(
 
 
 
-```{r}
+```{r charts}
 
 
 blank_table <- tibble(Date = NA_character_,
@@ -360,21 +361,20 @@ bank <- reactive(if (is.null(input$bank)){
 
 
 
-# ing
+# Credit card
 
-ing <- reactive(if (is.null(input$ing)){
+creditcard <- reactive(if (is.null(input$creditcard)){
   
   blank_table
   
 } else {
   
-  read_csv(input$ing$datapath) %>% 
-    mutate(Credit = as.numeric(Credit), 
-           Debit = as.numeric(Debit),
-           Amount = coalesce(Credit, Debit),
-           data_source = "ing", 
-           Date = dmy(Date)) %>%
-    select(-Credit, -Debit, -Balance)
+  read_csv(input$creditcard$datapath, col_names = F) %>% 
+    rename(Date = 1, Amount = 2, Description = 3) %>%  #, Balance = 4) %>%
+    mutate(data_source = "creditcard",
+           Date = dmy(Date),
+           Amount = as.numeric(Amount)) #%>% # giving Error about Amount data type
+  #  select(-Balance)
 })
 
 
@@ -478,7 +478,7 @@ paypal <- reactive(if (is.null(input$paypal)){
 # combine all transaction sources
 
 combined_import1 <- reactive(bind_rows(bank(), 
-                                       ing(), 
+                                       creditcard(), 
                                        paypal(),
                                        # cash(),
                                        # up_bank()
@@ -544,7 +544,7 @@ google_sheet_cats_done_data <- eventReactive(c(input$retrieve_from_google_sheets
                                                    read_sheet(ss = input$googlesheets_id_entry, sheet = "Categorisations", col_types = "c") %>% 
                                                      mutate(Date = as.Date(Date),
                                                             Amount = as.numeric(Amount),
-                                                            Description = as.numeric(Description),
+                                                            Description = as.character(Description),
                                                             data_source = as.character(data_source),
                                                             `Suggested Category` = as.character(`Suggested Category`),
                                                             `Category Level1` = as.character(`Category Level1`),
