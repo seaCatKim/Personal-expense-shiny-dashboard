@@ -2318,6 +2318,12 @@ Row {data-width=400}
 Instructions
 ===================================== 
 
+TEST
 
 SideBar {.sidebar}
 ---
+
+```{r}
+
+```
+
